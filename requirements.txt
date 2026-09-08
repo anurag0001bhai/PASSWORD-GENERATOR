@@ -1,2 +1,1 @@
-# No external packages required.
-# Uses Python standard library only.
+streamlit
