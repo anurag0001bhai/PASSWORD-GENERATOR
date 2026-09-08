@@ -1,70 +1,117 @@
 import secrets
 import string
+import streamlit as st
+
 
 def generate_password(length, use_upper, use_lower, use_digits, use_special):
     character_sets = []
 
     if use_upper:
         character_sets.append(string.ascii_uppercase)
+
     if use_lower:
         character_sets.append(string.ascii_lowercase)
+
     if use_digits:
         character_sets.append(string.digits)
+
     if use_special:
         character_sets.append(string.punctuation)
 
     if not character_sets:
         raise ValueError("Select at least one character type.")
 
+    if length < len(character_sets):
+        raise ValueError(
+            f"Password length must be at least {len(character_sets)}."
+        )
+
     all_characters = "".join(character_sets)
 
-    # Ensure selected character types are represented when possible.
-    password_chars = [secrets.choice(chars) for chars in character_sets]
+    # Make sure every selected character type is represented
+    password_chars = [
+        secrets.choice(chars) for chars in character_sets
+    ]
 
+    # Fill the remaining length
     while len(password_chars) < length:
         password_chars.append(secrets.choice(all_characters))
 
+    # Securely shuffle the password
     secrets.SystemRandom().shuffle(password_chars)
+
     return "".join(password_chars[:length])
 
 
-def main():
-    print("=" * 40)
-    print("       PASSWORD GENERATOR")
-    print("=" * 40)
+# -------------------------------
+# Streamlit Web Interface
+# -------------------------------
 
-    try:
-        length = int(input("Enter desired password length: "))
+st.set_page_config(
+    page_title="Password Generator",
+    page_icon="🔐",
+    layout="centered"
+)
 
-        if length < 4:
-            print("Please enter a length of at least 4.")
-            return
+st.title("🔐 Password Generator")
+st.write("Generate a strong and secure password instantly.")
 
-        use_upper = input("Include uppercase letters? (y/n): ").strip().lower() == "y"
-        use_lower = input("Include lowercase letters? (y/n): ").strip().lower() == "y"
-        use_digits = input("Include numbers? (y/n): ").strip().lower() == "y"
-        use_special = input("Include special characters? (y/n): ").strip().lower() == "y"
+st.divider()
 
-        selected_types = sum([use_upper, use_lower, use_digits, use_special])
+# Password length
+length = st.slider(
+    "Password Length",
+    min_value=4,
+    max_value=64,
+    value=12
+)
 
-        if selected_types == 0:
-            print("Error: Select at least one character type.")
-            return
+st.subheader("Character Types")
 
-        if length < selected_types:
-            print(f"Please choose a length of at least {selected_types}.")
-            return
+use_upper = st.checkbox(
+    "Include uppercase letters (A-Z)",
+    value=True
+)
 
+use_lower = st.checkbox(
+    "Include lowercase letters (a-z)",
+    value=True
+)
+
+use_digits = st.checkbox(
+    "Include numbers (0-9)",
+    value=True
+)
+
+use_special = st.checkbox(
+    "Include special characters (!@#$...)",
+    value=True
+)
+
+st.divider()
+
+if st.button("🔑 Generate Password", use_container_width=True):
+
+    if not any([use_upper, use_lower, use_digits, use_special]):
+        st.error("Please select at least one character type.")
+
+    else:
         password = generate_password(
-            length, use_upper, use_lower, use_digits, use_special
+            length,
+            use_upper,
+            use_lower,
+            use_digits,
+            use_special
         )
 
-        print("\nGenerated Password:", password)
-        print("Password Length:", len(password))
+        st.success("Password generated successfully!")
 
-    except ValueError:
-        print("Invalid input. Please enter a valid number.")
+        st.subheader("Your Password")
 
+        st.code(password, language=None)
 
-if __name__ == "__main__":
-    main()
+        st.write(f"**Password Length:** {len(password)} characters")
+
+        st.info(
+            "💡 Tip: Use a different strong password for every account."
+        )
